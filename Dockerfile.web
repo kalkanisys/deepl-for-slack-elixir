@@ -1,0 +1,31 @@
+# Use official Elixir image as base
+FROM hexpm/elixir:1.13.4-erlang-23.3.4.20-debian-bullseye-20241202-slim
+
+# Set environment to production
+ENV MIX_ENV=prod
+
+# Set working directory
+WORKDIR /app
+
+# Install hex and rebar
+RUN mix local.hex --force && \
+    mix local.rebar --force
+
+# Copy project files
+COPY . .
+
+# Install dependencies
+RUN mix deps.get && \
+    mix deps.compile
+
+# Compile the project
+RUN mix compile
+
+# Prepare assets for production
+RUN mix assets.deploy
+
+# Expose port 4000 (Phoenix default)
+EXPOSE 4000
+
+# Start the application
+CMD ["mix", "phx.server"]

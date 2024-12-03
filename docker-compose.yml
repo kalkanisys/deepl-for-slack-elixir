@@ -1,0 +1,112 @@
+version: '3.9'
+
+volumes:
+  postgres_data:
+  traefik:
+
+networks:
+  default:
+  public:
+    external: true
+
+services:
+  deepl-slack-bot:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    depends_on:
+      - postgres
+    environment:
+      - PORT=4000
+      - DEEPL_AUTH_KEY=${DEEPL_AUTH_KEY:?error}
+      - DATABASE_URL=ecto://${POSTGRES_USER:?error}:${POSTGRES_PASSWORD:?error}@postgres/${POSTGRES_DB:?error}
+      - HOSTNAME=${DOMAIN_NAME:?error}
+      - SECRET_KEY_BASE=${SECRET_KEY_BASE:?error}
+      - SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN:?error}
+      - SLACK_SIGNING_SECRET=${SLACK_SIGNING_SECRET:?error}
+    networks:
+      - public
+      - default
+    labels:
+      - traefik.enable=true
+      # - traefik.http.routers.${STACK:-website}.rule=Host(`${APP_HOST:?err}`)
+      - traefik.http.routers.deepl-slack-bot.rule=Host(`${DOMAIN_NAME:?err}`)
+      - traefik.http.routers.deepl-slack-bot.tls=true
+      - traefik.http.routers.deepl-slack-bot.entrypoints=http,https
+      - traefik.http.services.deepl-slack-bot.loadbalancer.server.port=4000
+
+  postgres:
+    image: postgres:16
+    restart: unless-stopped
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:?error}
+      - POSTGRES_USER=${POSTGRES_USER:?error}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:?error}
+    ports:
+      - "5432"
+    networks:
+      - default
+
+  traefik:
+    image: traefik:2.8
+    restart: unless-stopped
+    command:
+      - --api
+      - --api.insecure=true
+      - --providers.docker=true
+      - --providers.docker.network=public
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.http.address=:80
+      - --entrypoints.https.address=:443
+      - --entryPoints.http.forwardedHeaders.trustedIPs=${TF_HTTP_FORWARDED_HEADERS_TRUSTED_IPS:-0.0.0.0/0}
+      - --entryPoints.https.forwardedHeaders.trustedIPs=${TF_HTTPS_FORWARDED_HEADERS_TRUSTED_IPS:-0.0.0.0/0}
+      - --entryPoints.cloudflare.forwardedHeaders.trustedIPs=${TF_CLOUDFLARE_FORWARDED_HEADERS_TRUSTED_IPS:-0.0.0.0/0}
+      - --entryPoints.http.forwardedHeaders.insecure=${TF_HTTP_FORWARDED_HEADERS_INSECURE:-false}
+      - --entryPoints.https.forwardedHeaders.insecure=${TF_HTTPS_FORWARDED_HEADERS_INSECURE:-false}
+      - --entryPoints.cloudflare.forwardedHeaders.insecure=${TF_CLOUDFLARE_FORWARDED_HEADERS_INSECURE:-false}
+      - --entrypoints.http.http.redirections.entryPoint.to=https
+      - --entrypoints.http.http.redirections.entrypoint.scheme=https
+      - --serverstransport.insecureskipverify=true
+      - --accesslog=${TF_ACCESSLOG:-true}
+      - --accesslog.format=${TF_ACCESSLOG_FORMAT:-json}
+      - --accesslog.fields.defaultmode=keep
+      - --accesslog.fields.names.ClientUsername=drop
+      - --accesslog.fields.headers.defaultmode=drop
+      - --accesslog.fields.headers.names.User-Agent=keep
+      - --accesslog.fields.headers.names.Authorization=redact
+      - --accesslog.fields.headers.names.Content-Type=keep
+      - --accesslog.fields.headers.names.Cf-Connecting-Ip=keep
+      - --accesslog.fields.headers.names.Cf-Ipcountry=keep
+      - --accesslog.fields.headers.names.Origin=keep
+      - --accesslog.fields.headers.names.User-Agent=keep
+      - --accesslog.fields.headers.names.X-Real-Ip=keep
+      - --accesslog.fields.headers.names.Sec-Ch-Ua=keep
+      - --accesslog.fields.headers.names.Sec-Ch-Ua-Mobile=keep
+      - --accesslog.fields.headers.names.Sec-Ch-Ua-Platform=keep
+      - --accesslog.fields.names.StartLocal=drop
+      - --accesslog.fields.names.ClientAddr=drop
+      - --accesslog.fields.names.ClientPort=drop
+      - --accesslog.fields.names.ServiceURL=drop
+      - --accesslog.fields.names.TLSCipher=drop
+      - --accesslog.fields.names.TLSVersion=drop
+      - --certificatesresolvers.le.acme.tlschallenge=${ACME_TLS_CHALLENGE:-false}
+      - --certificatesresolvers.le.acme.email=${EMAIL:?error}
+      - --certificatesresolvers.le.acme.storage=/certificates/acme.json
+    networks:
+      - public
+    ports:
+      - 80:80
+      - 443:443
+      - 8080:8080
+    volumes:
+      - traefik:/certificates:rw
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    labels:
+      traefik.docker.network: public
+      traefik.enable: "false"
+
