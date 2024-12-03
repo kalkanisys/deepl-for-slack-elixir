@@ -1,0 +1,89 @@
+# Version Control
+.git/
+.gitignore
+
+# Build Artifacts
+/_build/
+/deps/
+/priv/plts/
+*.plt
+
+# If you run "mix test --cover", coverage assets end up here.
+/cover/
+
+# Mix Files
+# mix.lock
+# mix.exs
+
+# Release Artifacts
+/releases/
+/rel/
+
+# Temp Files
+*~
+.DS_Store
+
+# Logs
+*.log
+
+# Test Coverage
+/cover/
+/test/
+
+# Node Modules
+/assets/node_modules/
+
+# Environment Files
+.env
+*.env
+
+# Configuration Files
+config/config.secret.exs
+config/*.secret.exs
+
+# Database Data
+/data/
+*.sqlite
+*.sqlite3
+
+# Compiled Beam Files
+*.beam
+*.ez
+
+# Where 3rd-party dependencies like ExDoc output generated docs.
+/doc/
+
+# Ignore .fetch files in case you like to edit your project deps locally.
+/.fetch
+
+# If the VM crashes, it generates a dump, let's ignore it too.
+erl_crash.dump
+
+# Also ignore archive artifacts (built via "mix archive.build").
+*.ez
+
+# Ignore package tarball (built via "mix hex.build").
+deep_thought-*.tar
+
+# Ignore assets that are produced by build tools.
+/priv/static/assets/
+
+# Ignore digested assets cache.
+/priv/static/cache_manifest.json
+
+# In case you use Node.js/npm, you want to ignore these.
+npm-debug.log
+/assets/node_modules/
+
+# Extra
+/.vscode
+/priv/plts/*.plt
+/priv/plts/*.plt.hash
+Procfile
+elixir_buildpack.config
+README.md
+CHECKS
+Dockerfile*
+docker-compose*
+.buildpacks
+.github/
