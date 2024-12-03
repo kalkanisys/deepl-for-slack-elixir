@@ -22,7 +22,7 @@ services:
     environment:
       - PORT=4000
       - DEEPL_AUTH_KEY=${DEEPL_AUTH_KEY:?error}
-      - DATABASE_URL=ecto://${POSTGRES_USER:?error}:${POSTGRES_PASSWORD:?error}@postgres/${POSTGRES_DB:?error}
+      - DATABASE_URL=postgres://${POSTGRES_USER:?error}:${POSTGRES_PASSWORD:?error}@postgres/${POSTGRES_DB:?error}
       - HOSTNAME=${DOMAIN_NAME:?error}
       - SECRET_KEY_BASE=${SECRET_KEY_BASE:?error}
       - SLACK_BOT_TOKEN=${SLACK_BOT_TOKEN:?error}
@@ -32,9 +32,9 @@ services:
       - default
     labels:
       - traefik.enable=true
-      # - traefik.http.routers.${STACK:-website}.rule=Host(`${APP_HOST:?err}`)
       - traefik.http.routers.deepl-slack-bot.rule=Host(`${DOMAIN_NAME:?err}`)
       - traefik.http.routers.deepl-slack-bot.tls=true
+      - traefik.http.routers.deepl-slack-bot.tls.certresolver=le
       - traefik.http.routers.deepl-slack-bot.entrypoints=http,https
       - traefik.http.services.deepl-slack-bot.loadbalancer.server.port=4000
 
@@ -94,6 +94,7 @@ services:
       - --accesslog.fields.names.ServiceURL=drop
       - --accesslog.fields.names.TLSCipher=drop
       - --accesslog.fields.names.TLSVersion=drop
+      - --certificatesresolvers.le.acme.httpchallenge.entrypoint=http
       - --certificatesresolvers.le.acme.tlschallenge=${ACME_TLS_CHALLENGE:-false}
       - --certificatesresolvers.le.acme.email=${EMAIL:?error}
       - --certificatesresolvers.le.acme.storage=/certificates/acme.json
