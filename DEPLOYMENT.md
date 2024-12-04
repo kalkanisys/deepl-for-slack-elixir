@@ -52,12 +52,6 @@ SLACK_BOT_TOKEN=
 SLACK_SIGNING_SECRET=
 ```
 
-- Build docker image application
-
-```
-docker compose build
-```
-
 ## Start application
 
 - Run following command
