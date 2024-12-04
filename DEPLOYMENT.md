@@ -62,5 +62,5 @@ SLACK_SIGNING_SECRET=
 docker compose up -d
 
 # Run migration
-docker compose run deepl-slack-bot mix ecto.migrate
+docker compose exec deepl-slack-bot mix ecto.migrate
 ```
